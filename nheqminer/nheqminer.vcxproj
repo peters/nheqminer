@@ -20,7 +20,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>CTP_Nov2013</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -67,7 +67,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>logsetuplib.lib;cuda_tromp.lib;cpu_xenoncat.lib;cpu_tromp_SSE2.lib;ocl_xpm.lib;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>logsetuplib.lib;cpu_xenoncat.lib;cpu_tromp_SSE2.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>
       </IgnoreAllDefaultLibraries>
       <LargeAddressAware>
