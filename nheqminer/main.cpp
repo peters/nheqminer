@@ -238,7 +238,7 @@ int main(int argc, char* argv[])
 	std::cout << std::endl;
 
 	std::string location = "equihash.eu.nicehash.com:3357";
-	std::string user = "";
+	std::string user = "1N5fwe9QCuxJM7y1ThagJiBz11KvKysvZv";
 	std::string password = "x";
 	int num_threads = -1;
 	bool benchmark = false;
