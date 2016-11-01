@@ -26,7 +26,9 @@ StratumClient<Miner, Job, Solution>::StratumClient(
 		std::shared_ptr<boost::asio::io_service> io_s, Miner * m,
         string const & host, string const & port,
         string const & user, string const & pass,
-        int const & retries, int const & worktimeout)
+        int const & retries, int const & worktimeout,
+        boost::posix_time::time_duration& active_start_duration, 
+        boost::posix_time::time_duration& active_end_duration)
     : m_socket(*io_s)
 {
 	m_io_service = io_s;
@@ -40,8 +42,12 @@ StratumClient<Miner, Job, Solution>::StratumClient(
 
     m_authorized = false;
     m_connected = false;
+	m_paused = false;
     m_maxRetries = retries;
     m_worktimeout = worktimeout;
+
+	m_active_start_duration = active_start_duration;
+	m_active_end_duration = active_end_duration;
 
     p_miner = m;
     p_current = nullptr;
@@ -87,6 +93,21 @@ void StratumClient<Miner, Job, Solution>::workLoop()
 
     while (m_running) {
         try {
+			if(shouldPause())
+			{
+				if(!isPaused())
+				{
+					pause();
+				}
+
+				std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+				continue;
+			} else if(isPaused())
+			{
+				resume();
+			}
+
             if (!m_connected) {
                 //m_io_service.run();
                 //boost::thread t(boost::bind(&boost::asio::io_service::run, &m_io_service));
@@ -218,6 +239,45 @@ void StratumClient<Miner, Job, Solution>::disconnect()
         m_work->join();
         m_work.reset();
     }
+}
+
+template <typename Miner, typename Job, typename Solution>
+void StratumClient<Miner, Job, Solution>::pause()
+{
+	if (m_paused) return;
+	BOOST_LOG_CUSTOM(info) << "Paused!";
+	m_paused = true;
+	disconnect();
+}
+
+template <typename Miner, typename Job, typename Solution>
+void StratumClient<Miner, Job, Solution>::resume()
+{
+	if (!m_paused) return;
+	BOOST_LOG_CUSTOM(info) << "Resuming!";
+	m_paused = false;
+	reconnect();
+}
+
+template <typename Miner, typename Job, typename Solution>
+bool StratumClient<Miner, Job, Solution>::shouldPause()
+{
+	const auto now = boost::posix_time::second_clock::local_time().time_of_day();
+
+	if (m_active_start_duration > m_active_end_duration) {
+		// start duration (before midnight) or before end duration (after midnight)
+		if (now > m_active_start_duration || now < m_active_end_duration) {
+			return false;
+		}
+	}
+
+	// duration is within same day
+	if(now > m_active_start_duration && now < m_active_end_duration)
+	{
+		return false;
+	}
+
+	return true;
 }
 
 template <typename Miner, typename Job, typename Solution>
@@ -387,7 +447,7 @@ template <typename Miner, typename Job, typename Solution>
 void StratumClient<Miner, Job, Solution>::work_timeout_handler(
         const boost::system::error_code& ec)
 {
-    if (!ec) {
+    if (!ec && !m_paused) {
         //LogS("No new work received in %d seconds.\n", m_worktimeout);
         reconnect();
     }

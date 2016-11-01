@@ -102,7 +102,9 @@ public:
 	StratumClient(std::shared_ptr<boost::asio::io_service> io_s, Miner * m,
                   string const & host, string const & port,
                   string const & user, string const & pass,
-                  int const & retries, int const & worktimeout);
+                  int const & retries, int const & worktimeout,
+			      boost::posix_time::time_duration& active_start_duration,
+				  boost::posix_time::time_duration& active_end_duration);
     ~StratumClient() { }
 
     void setFailover(string const & host, string const & port);
@@ -110,11 +112,14 @@ public:
                      string const & user, string const & pass);
 
     bool isRunning() { return m_running; }
-    bool isConnected() { return m_connected && m_authorized; }
+    bool isConnected() { return !m_paused && m_connected && m_authorized; }
+	bool isPaused() { return m_paused; }
     bool current() { return p_current; }
     bool submit(const Solution* solution, const std::string& jobid);
     void reconnect();
     void disconnect();
+	void pause();
+	void resume();
 
 private:
     void startWorking();
@@ -123,7 +128,9 @@ private:
 
     void work_timeout_handler(const boost::system::error_code& ec);
 
-    void processReponse(const Object& responseObject);
+	bool shouldPause();
+	
+	void processReponse(const Object& responseObject);
 
     cred_t * p_active;
     cred_t m_primary;
@@ -132,6 +139,10 @@ private:
     bool m_authorized;
     bool m_connected;
     bool m_running = true;
+	bool m_paused;
+
+	boost::posix_time::time_duration m_active_start_duration;
+	boost::posix_time::time_duration m_active_end_duration;
 
     int    m_retries = 0;
     int    m_maxRetries;

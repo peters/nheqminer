@@ -56,6 +56,11 @@ void print_help()
 	std::cout << "\t-d [level]\tDebug print level (0 = print all, 5 = fatal only, default: 2)" << std::endl;
 	std::cout << "\t-b [hashes]\tRun in benchmark mode (default: 200 iterations)" << std::endl;
 	std::cout << std::endl;
+	std::cout << "Active job fetching settings (default: disabled)" << std::endl;
+	std::cout << "\t-ds [start_duration]\tStart fetching new jobs from (default: 00:00)" << std::endl;
+	std::cout << "\t-de [end_duration]\End fetching new jobs at (default: 00:00)" << std::endl;
+	std::cout << "Example: -ds 18:00 -de 22:00" << std::endl;
+	std::cout << std::endl;
 	std::cout << "CPU settings" << std::endl;
 	std::cout << "\t-t [num_thrds]\tNumber of CPU threads" << std::endl;
 	std::cout << "\t-e [ext]\tForce CPU ext (0 = SSE2, 1 = AVX, 2 = AVX2)" << std::endl;
@@ -164,7 +169,8 @@ void detect_AVX_and_AVX2()
 
 template <typename MinerType, typename StratumType>
 void start_mining(int api_port, int cpu_threads, int cuda_device_count, int opencl_device_count, int opencl_platform,
-	const std::string& host, const std::string& port, const std::string& user, const std::string& password,
+	const std::string& host, const std::string& port, const std::string& user, const std::string& password, 
+	boost::posix_time::time_duration& start_duration, boost::posix_time::time_duration& end_duration,
 	StratumType* handler)
 {
 	std::shared_ptr<boost::asio::io_service> io_service(new boost::asio::io_service);
@@ -182,7 +188,7 @@ void start_mining(int api_port, int cpu_threads, int cuda_device_count, int open
 
 	MinerType miner(cpu_threads, cuda_device_count, cuda_enabled, cuda_blocks, cuda_tpb, opencl_device_count, opencl_platform, opencl_enabled);
 	StratumType sc{
-		io_service, &miner, host, port, user, password, 0, 0
+		io_service, &miner, host, port, user, password, 0, 0, start_duration, end_duration
 	};
 
 	miner.onSolutionFound([&](const EquihashSolution& solution, const std::string& jobid) {
@@ -195,6 +201,9 @@ void start_mining(int api_port, int cpu_threads, int cuda_device_count, int open
 	int c = 0;
 	while (sc.isRunning()) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+		if (sc.isPaused()) continue;
+
 		if (++c % 1000 == 0)
 		{
 			double allshares = speed.GetShareSpeed() * 60;
@@ -242,6 +251,9 @@ int main(int argc, char* argv[])
 	int opencl_platform = 0;
 	int opencl_device_count = 0;
 	int force_cpu_ext = -1;
+
+	boost::posix_time::time_duration start_duration = boost::posix_time::time_duration(0, 39, 0, 0);
+	boost::posix_time::time_duration end_duration = boost::posix_time::time_duration(20, 40, 0, 0);
 
 	for (int i = 1; i < argc; ++i)
 	{
@@ -418,12 +430,12 @@ int main(int argc, char* argv[])
 			std::string host = location.substr(0, delim);
 			std::string port = location.substr(delim + 1);
 
-            if (use_avx)
+            if (false)
                 start_mining<ZMinerAVX, ZcashStratumClientAVX>(api_port, num_threads, cuda_device_count, opencl_device_count, opencl_platform,
-                host, port, user, password, scSigAVX);
+                host, port, user, password, start_duration, end_duration, scSigAVX);
             else
 				start_mining<ZMinerSSE2, ZcashStratumClientSSE2>(api_port, num_threads, cuda_device_count, opencl_device_count, opencl_platform,
-                host, port, user, password, scSigSSE2);
+                host, port, user, password, start_duration, end_duration, scSigSSE2);
 		}
 		else
 		{
