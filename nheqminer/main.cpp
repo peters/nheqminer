@@ -430,7 +430,7 @@ int main(int argc, char* argv[])
 			std::string host = location.substr(0, delim);
 			std::string port = location.substr(delim + 1);
 
-            if (false)
+            if (use_avx)
                 start_mining<ZMinerAVX, ZcashStratumClientAVX>(api_port, num_threads, cuda_device_count, opencl_device_count, opencl_platform,
                 host, port, user, password, start_duration, end_duration, scSigAVX);
             else
