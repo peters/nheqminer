@@ -139,7 +139,11 @@ void StratumClient<Miner, Job, Solution>::workLoop()
             }
         } catch (std::exception const& _e) {
 			BOOST_LOG_CUSTOM(warning) << _e.what();
-            reconnect();
+			
+        	if(!m_paused)
+			{
+				reconnect();
+			}
         }
     }
 }
@@ -247,7 +251,6 @@ void StratumClient<Miner, Job, Solution>::pause()
 	if (m_paused) return;
 	BOOST_LOG_CUSTOM(info) << "Paused!";
 	m_paused = true;
-	disconnect();
 }
 
 template <typename Miner, typename Job, typename Solution>
@@ -256,7 +259,6 @@ void StratumClient<Miner, Job, Solution>::resume()
 	if (!m_paused) return;
 	BOOST_LOG_CUSTOM(info) << "Resuming!";
 	m_paused = false;
-	reconnect();
 }
 
 template <typename Miner, typename Job, typename Solution>
