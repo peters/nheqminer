@@ -371,9 +371,12 @@ void StratumClient<Miner, Job, Solution>::processReponse(const Object& responseO
 					p_active->host = params[0].get_str();
 					p_active->port = params[1].get_str();
 				}
-				// TODO: Handle wait time
-				BOOST_LOG_CUSTOM(info) << "Reconnection requested";
-				reconnect();
+				if(!m_paused)
+				{
+					// TODO: Handle wait time
+					BOOST_LOG_CUSTOM(info) << "Reconnection requested";
+					reconnect();
+				}
 			}
 		}
 		break;
