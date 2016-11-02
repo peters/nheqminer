@@ -252,8 +252,8 @@ int main(int argc, char* argv[])
 	int opencl_device_count = 0;
 	int force_cpu_ext = -1;
 
-	boost::posix_time::time_duration start_duration = boost::posix_time::time_duration(0, 39, 0, 0);
-	boost::posix_time::time_duration end_duration = boost::posix_time::time_duration(20, 40, 0, 0);
+	boost::posix_time::time_duration start_duration = boost::posix_time::time_duration(16, 30, 0, 0);
+	boost::posix_time::time_duration end_duration = boost::posix_time::time_duration(6, 0, 0, 0);
 
 	for (int i = 1; i < argc; ++i)
 	{
